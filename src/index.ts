@@ -1,6 +1,10 @@
 export type DeclarationId = string | number;
 export type DeclarationType = string | number;
 
+/**
+ * Declaration is a data structure that represents a declaration of each element.
+ * It must be immutable and contain id and type.
+ */
 export type Declaration<
   T extends DeclarationType,
   V extends Object = Object,
@@ -11,21 +15,50 @@ export type Declaration<
   } & Omit<V, 'id' | 'type'>
 >;
 
+/**
+ * Mapped is any object that do non-declarative operations.
+ */
 export type Mapped = unknown;
+
+/**
+ * MappingContext is a context that is passed to Mapping.
+ */
 export type MappingContext = unknown;
 
+/**
+ * Mapping is a class that maps Declaration to Mapped.
+ */
 export interface Mapping<
   C extends MappingContext,
   T extends DeclarationType,
   D extends Declaration<T>,
   M extends Mapped,
 > {
+  /**
+   * Returns the type of Declaration.
+   */
   type(): T;
+
+  /**
+   * Create a new Mapped from Declaration and do non-declarative operation.
+   */
   create(context: C, dec: D): M;
+
+  /**
+   * Update Mapped from Declaration and do non-declarative operation.
+   */
   update(context: C, dec: D, oldDec: D, mapped: M): M;
+
+  /**
+   * Destroy Mapped.
+   * This method is called when the Declaration is removed.
+   */
   destroyed(context: C, oldDec: D, mapped: M): void;
 }
 
+/**
+ * DeclarationMapper is a class that manages Declaration and Mapped.
+ */
 export class DeclarationMapper<C extends MappingContext> {
   private declarations: Map<
     DeclarationId,
@@ -37,6 +70,9 @@ export class DeclarationMapper<C extends MappingContext> {
     Mapping<C, DeclarationType, Declaration<DeclarationType>, Mapped>
   >();
 
+  /**
+   * @param mappings Array of Mapping
+   */
   constructor(
     mappings: Mapping<
       C,
@@ -50,6 +86,10 @@ export class DeclarationMapper<C extends MappingContext> {
     });
   }
 
+  /**
+   * Update Declaration and Mapped.
+   * This method creates, updates, and deletes Mapped based on Declaration.
+   */
   update(context: C, declarations: Declaration<DeclarationType>[]): void {
     const newDeclarations = new Map<
       DeclarationId,
@@ -94,6 +134,9 @@ export class DeclarationMapper<C extends MappingContext> {
     this.declarations = newDeclarations;
   }
 
+  /**
+   * Clear all Mapped.
+   */
   clear(context: C): void {
     this.declarations.forEach(([dec, mapped]) => {
       const mapper = this.mappers.get(dec.type);
